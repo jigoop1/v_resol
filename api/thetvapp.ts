@@ -93,7 +93,7 @@ export default async (req: any, res: any) => {
       await page.waitForSelector('#loadVideoBtnTwo', {visible: true,}),
       await page.click('#loadVideoBtnTwo'),
       await page.waitForSelector(".jw-state-playing"),
-      await waitTillHTMLRendered(page)
+      // await page.waitTillHTMLRendered(page)
       // await page.waitForNavigation({waitUntil: 'networkidle0', })
     ]);
   } catch (error) {

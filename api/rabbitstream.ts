@@ -158,9 +158,9 @@ export default async (req: any, res: any) => {
       )
     
       // upsert the data,currently no return cases are checked,but if it works ... then it works ... can fix later ig [TODO] 
-      const { error } = await supabase
-        .from('streams')
-        .upsert([{ id: baseId, date_time:dateConstant.toISOString() , stream: finalResponse.source, subtitle: finalResponse.subtitle }], { onConflict: ['id'] });
+      // const { error } = await supabase
+        // .from('streams')
+        // .upsert([{ id: baseId, date_time:dateConstant.toISOString() , stream: finalResponse.source, subtitle: finalResponse.subtitle }], { onConflict: ['id'] });
       res.json(finalResponse);
     };
   };

@@ -20,7 +20,7 @@
     "typescript": "^5.3.3"
   },
   "engines": {
-    "node": "18"
+    "node": "20"
   },
   "pkg": {
     "assets": "node_modules/puppeteer-extra-plugin-stealth/**/*.*"
