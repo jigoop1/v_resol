@@ -90,9 +90,9 @@ export default async (req: any, res: any) => {
       page.waitForRequest(req => req.url().includes('.m3u8'), { timeout: 20000 }),
       page.goto(`${id}?z=&_debug=true`, { waitUntil: 'domcontentloaded' }),
       // page.goto(`${id}?z=&_debug=true`, { waitUntil: 'networkidle0' }),
-      await page.waitForSelector('#loadVideoBtnTwo', {visible: true,}),
-      await page.click('#loadVideoBtnTwo'),
-      await page.waitForSelector(".jw-state-playing"),
+      await page.waitForSelector('#loadVideoBtnTwo'),
+      await page.click('#loadVideoBtnTwo')
+      // await page.waitForSelector(".jw-state-playing"),
       // await page.waitTillHTMLRendered(page)
       // await page.waitForNavigation({waitUntil: 'networkidle0', })
     ]);
