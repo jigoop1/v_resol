@@ -71,8 +71,8 @@ export default async (req: any, res: any) => {
 
   // Set headers,else wont work.
   await page.setExtraHTTPHeaders({ 'Referer': 'https://flixhq.to/' });
-  
-  const logger:string[] = [];
+
+  const logger: string[] = [];
   const finalResponse:{source:string,subtitle:string[]} = {source:'',subtitle:[]}
   
   page.on('request', async (interceptedRequest) => {
@@ -80,14 +80,21 @@ export default async (req: any, res: any) => {
       logger.push(interceptedRequest.url());
       if (interceptedRequest.url().includes('.m3u8')) finalResponse.source = interceptedRequest.url();
       if (interceptedRequest.url().includes('.vtt')) finalResponse.subtitle.push(interceptedRequest.url());
+      //if (interceptedRequest.url().includes('getSource')) finalResponse.subtitle.push(interceptedRequest.url());
       interceptedRequest.continue();
     })();
   });
-  
+
   try {
     const [req] = await Promise.all([
       page.waitForRequest(req => req.url().includes('.m3u8'), { timeout: 20000 }),
       page.goto(`${id}?z=&_debug=true`, { waitUntil: 'domcontentloaded' }),
+      // page.goto(`${id}?z=&_debug=true`, { waitUntil: 'networkidle0' }),
+      await page.waitForSelector('#loadVideoBtnTwo', {visible: true,}),
+      await page.click('#loadVideoBtnTwo'),
+      await page.waitForSelector(".jw-state-playing"),
+      await waitTillHTMLRendered(page)
+      // await page.waitForNavigation({waitUntil: 'networkidle0', })
     ]);
   } catch (error) {
     return res.status(500).end(`Server Error,check the params.`)
