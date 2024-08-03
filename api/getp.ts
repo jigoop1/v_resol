@@ -28,34 +28,6 @@ require('puppeteer-extra-plugin-stealth/evasions/window.outerdimensions')
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 puppeteer.use(StealthPlugin())
 
-const waitTillHTMLRendered = async (page, timeout = 30000) => {
-  const checkDurationMsecs = 1000;
-  const maxChecks = timeout / checkDurationMsecs;
-  let lastHTMLSize = 0;
-  let checkCounts = 1;
-  let countStableSizeIterations = 0;
-  const minStableSizeIterations = 3;
-
-  while(checkCounts++ <= maxChecks){
-    let html = await page.content();
-    let currentHTMLSize = html.length;
-    let bodyHTMLSize = await page.evaluate(() => document.body.innerHTML.length);
-    console.log('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
-
-    if(lastHTMLSize != 0 && currentHTMLSize == lastHTMLSize)
-      countStableSizeIterations++;
-    else
-      countStableSizeIterations = 0; //reset the counter
-
-    if(countStableSizeIterations >= minStableSizeIterations) {
-      console.log("Page rendered fully..");
-      break;
-    }
-
-    lastHTMLSize = currentHTMLSize;
-    await page.waitForTimeout(checkDurationMsecs);
-  }
-};
 
 export default async (req: any, res: any) => {
   let {body,method} = req
@@ -122,7 +94,7 @@ export default async (req: any, res: any) => {
 		// }
 	  }
 	  // You now have a buffer of your response, you can then convert it to string :
-	  finalResponse.source = responseBody.toString();
+	  finalResponse.source = responseBody.text();
     // console.log(responseBody.toString());
     request.continue()
   });
@@ -130,17 +102,18 @@ export default async (req: any, res: any) => {
   try {
     const [req] = await Promise.all([
       // page.waitForRequest(req => req.url().includes('.m3u8'), { timeout: 20000 }),
-      page.goto(`${iurl}?z=&_debug=true`, { waitUntil: 'domcontentloaded' }),
+      // page.goto(`${iurl}?z=&_debug=true`, { waitUntil: 'domcontentloaded' }),
+      await page.goto(`${iurl}?z=&_debug=true`, { waitUntil: ['domcontentloaded', 'networkidle2'] });
       // page.goto(`${id}?z=&_debug=true`, { waitUntil: 'networkidle0' }),
       await page.waitForSelector(`${selector}`),
-      await page.click(`${selector}`),
+      // await page.click(`${selector}`),
       // await page.waitForSelector(".jw-state-playing"),
       // await waitTillHTMLRendered(page)
       // const data = await page.content()
       // await page.waitForNavigation({waitUntil: 'networkidle0', })
     ]);
   } catch (error) {
-	  console.error(error)
+	  console.log(`Webhook Error: ${error.message}`)
       // console.log('prisma before')
       res.status(400).json({ error: `Webhook Error: ${error.message}` })
 	  }
