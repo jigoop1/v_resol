@@ -103,7 +103,7 @@ export default async (req: any, res: any) => {
     const [req] = await Promise.all([
       page.waitForRequest(req => req.url(), { timeout: 20000 }),
       // page.goto(`${iurl}?z=&_debug=true`, { waitUntil: 'domcontentloaded' }),
-      await page.goto(`${iurl}?z=&_debug=true`, { waitUntil: ['domcontentloaded', 'networkidle2'] }),
+      await page.goto(`${iurl}?z=&_debug=true`, { waitUntil: ['domcontentloaded'] }),
       // page.goto(`${id}?z=&_debug=true`, { waitUntil: 'networkidle0' }),
       await page.waitForSelector(`${selector}`)
       // await page.click(`${selector}`),
