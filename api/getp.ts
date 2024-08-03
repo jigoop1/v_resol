@@ -106,7 +106,7 @@ export default async (req: any, res: any) => {
   const logger: string[] = [];
   const finalResponse:{source:string,subtitle:string[]} = {source:'',subtitle:[]}
   // Define our blocked extensions
-  const blockedExtensions = ['.png', '.css', '.jpg', '.jpeg', '.pdf', '.svg'];
+  const blockedExtensions = ['.png', '.jpg', '.jpeg', '.pdf', '.svg'];
 
   // Use CDP session to block resources
   await page.client().send('Network.setBlockedURLs', { urls: blockedExtensions });
@@ -135,7 +135,7 @@ export default async (req: any, res: any) => {
       await page.waitForSelector(`${selector}`),
       await page.click(`${selector}`),
       // await page.waitForSelector(".jw-state-playing"),
-      await waitTillHTMLRendered(page)
+      // await waitTillHTMLRendered(page)
       // const data = await page.content()
       // await page.waitForNavigation({waitUntil: 'networkidle0', })
     ]);
