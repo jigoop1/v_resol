@@ -1,6 +1,9 @@
 // same file but differnt name.....
 // made by theguy
 
+import puppeteerExtra from 'puppeteer-extra';
+import stealthPlugin from 'puppeteer-extra-plugin-stealth';
+
 const puppeteer = require('puppeteer-extra');
 const chrome = require('@sparticuz/chromium');
 
@@ -27,6 +30,11 @@ require('puppeteer-extra-plugin-stealth/evasions/window.outerdimensions')
 
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 puppeteer.use(StealthPlugin())
+
+// This function can run for a maximum of 30 seconds
+export const config = {
+  maxDuration: 30,
+};
 
 
 export default async (req: any, res: any) => {
@@ -102,6 +110,7 @@ export default async (req: any, res: any) => {
   try {
     const [req] = await Promise.all([
       page.waitForRequest(req => req.url(), { timeout: 20000 }),
+      console.log("We are going to " + iurl + ":"),
       // page.goto(`${iurl}?z=&_debug=true`, { waitUntil: 'domcontentloaded' }),
       await page.goto(`${iurl}?z=&_debug=true`, { waitUntil: ['domcontentloaded'] }),
       // page.goto(`${id}?z=&_debug=true`, { waitUntil: 'networkidle0' }),
@@ -113,7 +122,7 @@ export default async (req: any, res: any) => {
       // await page.waitForNavigation({waitUntil: 'networkidle0', })
     ]);
   } catch (error) {
-	  console.log(`Webhook Error: ${error.message}`)
+	  console.log(`Webhook Error: ${error.message}`),
       // console.log('prisma before')
       res.status(400).json({ error: `Webhook Error: ${error.message}` })
 	  }

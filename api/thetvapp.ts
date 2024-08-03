@@ -28,6 +28,11 @@ require('puppeteer-extra-plugin-stealth/evasions/window.outerdimensions')
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 puppeteer.use(StealthPlugin())
 
+// This function can run for a maximum of 30 seconds
+export const config = {
+  maxDuration: 30,
+};
+
 export default async (req: any, res: any) => {
   let {body,method} = req
 
@@ -98,7 +103,7 @@ export default async (req: any, res: any) => {
       // await page.waitForNavigation({waitUntil: 'networkidle0', })
     ]);
   } catch (error) {
-    return res.status(500).end(`Server Error,check the params.`)
+    return res.status(500).end(`Server Error: ${error.message},check the params.`)
   }
   await browser.close();
 

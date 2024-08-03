@@ -22,6 +22,11 @@
   "engines": {
     "node": "20"
   },
+  "functions": {
+  "api/**/*": {
+    "maxDuration": 60
+  }
+  },
   "pkg": {
     "assets": "node_modules/puppeteer-extra-plugin-stealth/**/*.*"
   }
