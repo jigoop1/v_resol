@@ -81,7 +81,7 @@ export default async (req: any, res: any) => {
   await page.setExtraHTTPHeaders({ 'Referer': 'https://flixhq.to/' });
 
   const logger: string[] = [];
-  const finalResponse:{source:string,subtitle:string[]} = {source:'',subtitle:[]}
+  const finalResponse:{source:string} = {source:''}
   // Define our blocked extensions
   const blockedExtensions = ['.png', '.jpg', '.jpeg', '.pdf', '.svg'];
 
@@ -89,40 +89,47 @@ export default async (req: any, res: any) => {
   await page.client().send('Network.setBlockedURLs', { urls: blockedExtensions });
 
   page.on('request', async (request) => {
-	  const response = await request.response();
+      const response = await request.response();
       const responseHeaders = response.headers();
-	  let responseBody;
-	  if (request.redirectChain().length === 0) {
-	  // Because body can only be accessed for non-redirect responses.
-	  // if (request.url().includes('desiredrequest.json')){
-	  responseBody = await response.buffer();
-		// }
-	  }
-	  // You now have a buffer of your response, you can then convert it to string :
-	  finalResponse.source = responseBody.toString();
+      let responseBody;
+      if (request.redirectChain().length === 0) {
+      // Because body can only be accessed for non-redirect responses.
+      // if (request.url().includes('desiredrequest.json')){
+      responseBody = await response.buffer();
+        // }
+      }
+    const iframeHandle = await page.$('iframe[*]'),
+    const iframeContent = await iframeHandle.contentFrame(),
+    // Extract the content within the Trustpilot iframe
+    finalResponse.source = await iframeContent.$eval('body', element =>
+      // element.innerHTML.trim()
+      element.outerHTML.trim()
+    );
+      // You now have a buffer of your response, you can then convert it to string :
+      // finalResponse.source = responseBody.toString();
     // console.log(responseBody.toString());
     request.continue()
   });
 
   try {
     const [req] = await Promise.all([
-      page.waitForRequest(req => req.url(), { timeout: 20000 }),
-      console.log("We are going to " + iurl + ":"),
-      // page.goto(`${iurl}?z=&_debug=true`, { waitUntil: 'domcontentloaded' }),
-      await page.goto(`${iurl}?z=&_debug=true`, { waitUntil: ['domcontentloaded'] }),
-      // page.goto(`${id}?z=&_debug=true`, { waitUntil: 'networkidle0' }),
-      await page.waitForSelector(`${selector}`)
-      // await page.click(`${selector}`),
+      page.goto(url, { waitUntil: 'domcontentloaded' , timeout: 60000 }),
+      await page.waitForSelector(`${selector}`, { timeout: 5000 }),
+      await page.click(`${selector}`, { timeout: 5000 }),
+      // Extract the entire HTML content of the page
+      // const pageHTML = await page.content(),
+      // Identify the iframe using a selector or any other appropriate method
+
+      // const jsonData = JSON.stringify({ trustpilotContent });
       // await page.waitForSelector(".jw-state-playing"),
       // await waitTillHTMLRendered(page),
-      // const data = await page.content(),
       // await page.waitForNavigation({waitUntil: 'networkidle0', }),
     ]);
   } catch (error) {
-	  console.log(`Webhook Error: ${error.message}`),
+      console.log(`Webhook Error: ${error.message}`),
       // console.log('prisma before')
       res.status(400).json({ error: `Webhook Error: ${error.message}` })
-	  }
+      }
   await browser.close();
 
   // Response headers.
