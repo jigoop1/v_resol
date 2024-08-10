@@ -33,6 +33,34 @@ export const config = {
   maxDuration: 30,
 };
 
+const waitTillHTMLRendered = async (page, timeout = 30000) => {
+  const checkDurationMsecs = 1000;
+  const maxChecks = timeout / checkDurationMsecs;
+  let lastHTMLSize = 0;
+  let checkCounts = 1;
+  let countStableSizeIterations = 0;
+  const minStableSizeIterations = 3;
+
+  while(checkCounts++ <= maxChecks){
+    let html = await page.content();
+    let currentHTMLSize = html.length;
+    let bodyHTMLSize = await page.evaluate(() => document.body.innerHTML.length);
+    console.log('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
+
+    if(lastHTMLSize != 0 && currentHTMLSize == lastHTMLSize)
+      countStableSizeIterations++;
+    else
+      countStableSizeIterations = 0; //reset the counter
+
+    if(countStableSizeIterations >= minStableSizeIterations) {
+      console.log("Page rendered fully..");
+      break;
+    }
+
+    lastHTMLSize = currentHTMLSize;
+    await page.waitForTimeout(checkDurationMsecs);
+  }
+};
 
 export default async (req: any, res: any) => {
   let {body,method} = req
@@ -111,10 +139,10 @@ export default async (req: any, res: any) => {
       // page.goto(`${iurl}?z=&_debug=true`, { waitUntil: 'domcontentloaded' }),
       await page.goto(`${iurl}?z=&_debug=true`, { waitUntil: ['domcontentloaded'] }),
       // page.goto(`${id}?z=&_debug=true`, { waitUntil: 'networkidle0' }),
-      await page.waitForSelector(`${selector}`)
+      await page.waitForSelector(`${selector}`),
       // await page.click(`${selector}`),
       // await page.waitForSelector(".jw-state-playing"),
-      // await waitTillHTMLRendered(page),
+      await waitTillHTMLRendered(page),
       // const data = await page.content(),
       // await page.waitForNavigation({waitUntil: 'networkidle0', }),
     ]);
@@ -137,6 +165,6 @@ export default async (req: any, res: any) => {
     'Access-Control-Allow-Headers',
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   )
-  console.log(finalResponse);
+  // console.log(finalResponse);
   res.json(finalResponse);
 };

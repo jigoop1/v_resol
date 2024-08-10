@@ -98,17 +98,30 @@ export default async (req: any, res: any) => {
       responseBody = await response.buffer();
         // }
       }
-    const iframeHandle = await page.$('iframe[*]'),
-    const iframeContent = await iframeHandle.contentFrame(),
-    // Extract the content within the Trustpilot iframe
-    finalResponse.source = await iframeContent.$eval('body', element =>
-      // element.innerHTML.trim()
-      element.outerHTML.trim()
-    );
+      try {
+        // Extract the content within the Trustpilot iframe
+        const finalResponse.source = await page.$eval('body', element =>
+          // element.innerHTML.trim()
+          element.outerHTML.trim()
+        );
+        if (finalResponse.source.isEmpty()) {
+          const iframeHandle = await page.$('iframe[*]');
+            const iframeContent = await iframeHandle.contentFrame();
+            // Extract the content within the Trustpilot iframe
+            const finalResponse.source = await iframeContent.$eval('body', element =>
+              // element.innerHTML.trim()
+              element.outerHTML.trim()
+            );
+        }
+      } catch (error) {
+        console.log(`Error extracting page iframe Error: ${error.message}`);
+        // Handle the error appropriately
+      }
+
       // You now have a buffer of your response, you can then convert it to string :
       // finalResponse.source = responseBody.toString();
-    // console.log(responseBody.toString());
-    request.continue()
+      // console.log(responseBody.toString());
+      request.continue()
   });
 
   try {
