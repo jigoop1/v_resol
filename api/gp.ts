@@ -89,23 +89,23 @@ export default async (req: any, res: any) => {
   await page.client().send('Network.setBlockedURLs', { urls: blockedExtensions });
 
   await page.setRequestInterception(true);
-  await page.on('requestfinished', async (request) => {
-      var response = await request.response();
+  await page.on('requestfinished', async (req) => {
+      var response = await req.response();
       try {
-          if (request.redirectChain().length === 0) {
+          if (req.redirectChain().length === 0) {
              var responseBody = await response.buffer();
              console.log(responseBody.toString());
           }
       }catch (err) { console.log(err); }
   });
-  await page.on('request', request => {
-      request.continue();
+  await page.on('request', req => {
+      req.continue();
   });
-  page.on('response', response => {
-    if (response.url().includes('scripts'))
-        console.log(response.url());
+  page.on('response', res => {
+    if (res.url().includes('scripts'))
+        console.log(res.url());
     });
-  const res = await page.waitForResponse(response => response.url().includes('scripts'));
+  // const res = await page.waitForResponse(response => response.url().includes('scripts'));
   console.log(await res.text());
   try {
 	const [req] = await Promise.all([
