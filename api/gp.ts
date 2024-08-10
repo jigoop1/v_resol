@@ -93,36 +93,19 @@ export default async (req: any, res: any) => {
 	  const responseHeaders = response.headers();
 	  let responseBody;
 	  if (request.redirectChain().length === 0) {
-	  // Because body can only be accessed for non-redirect responses.
-	  // if (request.url().includes('desiredrequest.json')){
-	  responseBody = await response.buffer();
-		// }
-	  }
-	  try {
-		// Extract the content within the Trustpilot iframe
-		const finalResponse.source = await page.$eval('body', element =>
-		  // element.innerHTML.trim()
-		  element.outerHTML.trim()
-		);
-		if (finalResponse.source.isEmpty()) {
-		  const iframeHandle = await page.$('iframe[*]');
-			const iframeContent = await iframeHandle.contentFrame();
-			// Extract the content within the Trustpilot iframe
-			const finalResponse.source = await iframeContent.$eval('body', element =>
-			// element.innerHTML.trim()
-			element.outerHTML.trim()
-			);
+	  	// Because body can only be accessed for non-redirect responses.
+	  	 if (request.url()){
+	  		responseBody = await response.buffer();
 		}
-		} catch (error) {
-			console.log(`Error extracting page iframe Error: ${error.message}`);
-			// Handle the error appropriately
-		};
 
 		// You now have a buffer of your response, you can then convert it to string :
-		// finalResponse.source = responseBody.toString();
+		finalResponse.source = responseBody.toString();
 		// console.log(responseBody.toString());
-		request.continue()
-	  });
+	  }
+	  } catch (error) {
+			console.log(`Error extracting page iframe Error: ${error.message}`);
+			// Handle the error appropriately
+	    };
 
   try {
 	const [req] = await Promise.all([
@@ -158,5 +141,6 @@ export default async (req: any, res: any) => {
 	'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   )
   // console.log(finalResponse);
+//   finalResponse.source = responseBody
   res.json(finalResponse);
 };
