@@ -116,22 +116,19 @@ export default async (req: any, res: any) => {
   // Use CDP session to block resources
   await page.client().send('Network.setBlockedURLs', { urls: blockedExtensions });
 
-  page.on('request', async (request) => {
-	  const response = await request.response();
-	  const responseHeaders = response.headers();
-	  let responseBody;
-	  if (request.redirectChain().length === 0) {
-	  // Because body can only be accessed for non-redirect responses.
-	  // if (request.url().includes('desiredrequest.json')){
-	  responseBody = await response.buffer();
-		// }
-		};
-
-		// You now have a buffer of your response, you can then convert it to string :
-		// finalResponse.source = responseBody.toString();
-		// console.log(responseBody.toString());
-		request.continue()
-	  });
+  await page.setRequestInterception(true);
+  await page.on('requestfinished', async (request) => {
+      var response = await request.response();
+      try {
+          if (request.redirectChain().length === 0) {
+             var responseBody = await response.buffer();
+             console.log(responseBody.toString());
+          }
+      }catch (err) { console.log(err); }
+  });
+  await page.on('request', request => {
+      request.continue();
+  });
 
   try {
 	const [req] = await Promise.all([

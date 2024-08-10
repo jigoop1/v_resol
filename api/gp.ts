@@ -88,34 +88,33 @@ export default async (req: any, res: any) => {
   // Use CDP session to block resources
   await page.client().send('Network.setBlockedURLs', { urls: blockedExtensions });
 
-  page.on('request', async (request) => {
-	  const response = await request.response();
-	  const responseHeaders = response.headers();
-	  let responseBody;
-	  if (request.redirectChain().length === 0) {
-	  	// Because body can only be accessed for non-redirect responses.
-	  	 if (request.url()){
-	  		responseBody = await response.buffer();
-		}
-
-		// You now have a buffer of your response, you can then convert it to string :
-		finalResponse.source = responseBody.toString();
-		// console.log(responseBody.toString());
-	  }
-	  } catch (error) {
-			console.log(`Error extracting page iframe Error: ${error.message}`);
-			// Handle the error appropriately
-	    };
-
+  await page.setRequestInterception(true);
+  await page.on('requestfinished', async (request) => {
+      var response = await request.response();
+      try {
+          if (request.redirectChain().length === 0) {
+             var responseBody = await response.buffer();
+             console.log(responseBody.toString());
+          }
+      }catch (err) { console.log(err); }
+  });
+  await page.on('request', request => {
+      request.continue();
+  });
+  page.on('response', response => {
+    if (response.url().includes('scripts'))
+        console.log(response.url());
+    });
+  const res = await page.waitForResponse(response => response.url().includes('scripts'));
+  console.log(await res.text());
   try {
 	const [req] = await Promise.all([
 		page.goto(iurl, { waitUntil: 'domcontentloaded' , timeout: 60000 }),
 		await page.waitForSelector(`${selector}`, { timeout: 5000 }),
-		await page.click(`${selector}`, { timeout: 5000 }),
+		await page.click(`${selector}`, { timeout: 5000 })
 		// Extract the entire HTML content of the page
 		// const pageHTML = await page.content(),
 		// Identify the iframe using a selector or any other appropriate method
-
 		// const jsonData = JSON.stringify({ trustpilotContent });
 		// await page.waitForSelector(".jw-state-playing"),
 		// await waitTillHTMLRendered(page),
