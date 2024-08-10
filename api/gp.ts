@@ -39,14 +39,14 @@ export default async (req: any, res: any) => {
 
   // Some header shits
   if (method !== 'POST') {
-    res.setHeader('Access-Control-Allow-Credentials', true)
-    res.setHeader('Access-Control-Allow-Origin', '*')
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
-    res.setHeader(
-      'Access-Control-Allow-Headers',
-      'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-    )
-    return res.status(200).end()
+	res.setHeader('Access-Control-Allow-Credentials', true)
+	res.setHeader('Access-Control-Allow-Origin', '*')
+	res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
+	res.setHeader(
+	  'Access-Control-Allow-Headers',
+	  'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+	)
+	return res.status(200).end()
   }
 
   // Some checks...
@@ -55,24 +55,24 @@ export default async (req: any, res: any) => {
 
   const iurl = body.iurl;
   const selector = body.selector;
-  const isProd = process.env.NODE_ENV === 'production'
+  const isProd = process.env.NODE_ENV === 'production';
 
   // create browser based on ENV
   let browser;
   if (isProd) {
-    browser = await puppeteer.launch({
-      args: chrome.args,
-      defaultViewport: chrome.defaultViewport,
-      executablePath: await chrome.executablePath(),
-      headless: true,
-      ignoreHTTPSErrors: true
-    })
+	browser = await puppeteer.launch({
+	  args: chrome.args,
+	  defaultViewport: chrome.defaultViewport,
+	  executablePath: await chrome.executablePath(),
+	  headless: true,
+	  ignoreHTTPSErrors: true
+	})
   } else {
-    browser = await puppeteer.launch({
-      headless: true,
-      executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    })
-  }
+	browser = await puppeteer.launch({
+		headless: true,
+		executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+	})
+  };
   const page = await browser.newPage();
   await page.setViewport({ width: 1920, height: 1080 });
   await page.setRequestInterception(true);
@@ -89,60 +89,60 @@ export default async (req: any, res: any) => {
   await page.client().send('Network.setBlockedURLs', { urls: blockedExtensions });
 
   page.on('request', async (request) => {
-      const response = await request.response();
-      const responseHeaders = response.headers();
-      let responseBody;
-      if (request.redirectChain().length === 0) {
-      // Because body can only be accessed for non-redirect responses.
-      // if (request.url().includes('desiredrequest.json')){
-      responseBody = await response.buffer();
-        // }
-      }
-      try {
-        // Extract the content within the Trustpilot iframe
-        const finalResponse.source = await page.$eval('body', element =>
-          // element.innerHTML.trim()
-          element.outerHTML.trim()
-        );
-        if (finalResponse.source.isEmpty()) {
-          const iframeHandle = await page.$('iframe[*]');
-            const iframeContent = await iframeHandle.contentFrame();
-            // Extract the content within the Trustpilot iframe
-            const finalResponse.source = await iframeContent.$eval('body', element =>
-              // element.innerHTML.trim()
-              element.outerHTML.trim()
-            );
-        }
-      } catch (error) {
-        console.log(`Error extracting page iframe Error: ${error.message}`);
-        // Handle the error appropriately
-      }
+	  const response = await request.response();
+	  const responseHeaders = response.headers();
+	  let responseBody;
+	  if (request.redirectChain().length === 0) {
+	  // Because body can only be accessed for non-redirect responses.
+	  // if (request.url().includes('desiredrequest.json')){
+	  responseBody = await response.buffer();
+		// }
+	  }
+	  try {
+		// Extract the content within the Trustpilot iframe
+		const finalResponse.source = await page.$eval('body', element =>
+		  // element.innerHTML.trim()
+		  element.outerHTML.trim()
+		);
+		if (finalResponse.source.isEmpty()) {
+		  const iframeHandle = await page.$('iframe[*]');
+			const iframeContent = await iframeHandle.contentFrame();
+			// Extract the content within the Trustpilot iframe
+			const finalResponse.source = await iframeContent.$eval('body', element =>
+			// element.innerHTML.trim()
+			element.outerHTML.trim()
+			);
+		}
+		} catch (error) {
+			console.log(`Error extracting page iframe Error: ${error.message}`);
+			// Handle the error appropriately
+		};
 
-      // You now have a buffer of your response, you can then convert it to string :
-      // finalResponse.source = responseBody.toString();
-      // console.log(responseBody.toString());
-      request.continue()
-  });
+		// You now have a buffer of your response, you can then convert it to string :
+		// finalResponse.source = responseBody.toString();
+		// console.log(responseBody.toString());
+		request.continue()
+	  });
 
   try {
-    const [req] = await Promise.all([
-      page.goto(url, { waitUntil: 'domcontentloaded' , timeout: 60000 }),
-      await page.waitForSelector(`${selector}`, { timeout: 5000 }),
-      await page.click(`${selector}`, { timeout: 5000 }),
-      // Extract the entire HTML content of the page
-      // const pageHTML = await page.content(),
-      // Identify the iframe using a selector or any other appropriate method
+	const [req] = await Promise.all([
+		page.goto(iurl, { waitUntil: 'domcontentloaded' , timeout: 60000 }),
+		await page.waitForSelector(`${selector}`, { timeout: 5000 }),
+		await page.click(`${selector}`, { timeout: 5000 }),
+		// Extract the entire HTML content of the page
+		// const pageHTML = await page.content(),
+		// Identify the iframe using a selector or any other appropriate method
 
-      // const jsonData = JSON.stringify({ trustpilotContent });
-      // await page.waitForSelector(".jw-state-playing"),
-      // await waitTillHTMLRendered(page),
-      // await page.waitForNavigation({waitUntil: 'networkidle0', }),
-    ]);
+		// const jsonData = JSON.stringify({ trustpilotContent });
+		// await page.waitForSelector(".jw-state-playing"),
+		// await waitTillHTMLRendered(page),
+		// await page.waitForNavigation({waitUntil: 'networkidle0', }),
+		]);
   } catch (error) {
-      console.log(`Webhook Error: ${error.message}`),
-      // console.log('prisma before')
-      res.status(400).json({ error: `Webhook Error: ${error.message}` })
-      }
+	  console.log(`Webhook Error: ${error.message}`),
+	  // console.log('prisma before')
+	  res.status(400).json({ error: `Webhook Error: ${error.message}` })
+	  }
   await browser.close();
 
   // Response headers.
@@ -154,9 +154,9 @@ export default async (req: any, res: any) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
   res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+	'Access-Control-Allow-Headers',
+	'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   )
-  console.log(finalResponse);
+  // console.log(finalResponse);
   res.json(finalResponse);
 };
