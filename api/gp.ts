@@ -82,7 +82,7 @@ export default async (req: any, res: any) => {
   await page.setRequestInterception(true);
 
   // Set headers,else wont work.
-  await page.setExtraHTTPHeaders({ 'Referer': 'https://flixhq.to/' });
+  await page.setExtraHTTPHeaders({ 'Referer': 'https://www.google.com/' });
 
   const logger: string[] = [];
   const finalResponse:{source:string} = {source:''}

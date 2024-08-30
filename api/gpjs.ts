@@ -33,34 +33,6 @@ export const config = {
   maxDuration: 60,
 };
 
-const waitTillHTMLRendered = async (page, timeout = 30000) => {
-  const checkDurationMsecs = 1000;
-  const maxChecks = timeout / checkDurationMsecs;
-  let lastHTMLSize = 0;
-  let checkCounts = 1;
-  let countStableSizeIterations = 0;
-  const minStableSizeIterations = 3;
-
-  while(checkCounts++ <= maxChecks){
-	let html = await page.content();
-	let currentHTMLSize = html.length;
-	let bodyHTMLSize = await page.evaluate(() => document.body.innerHTML.length);
-	console.log('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
-
-	if(lastHTMLSize != 0 && currentHTMLSize == lastHTMLSize)
-	  countStableSizeIterations++;
-	else
-	  countStableSizeIterations = 0; //reset the counter
-
-	if(countStableSizeIterations >= minStableSizeIterations) {
-	  console.log("Page rendered fully..");
-	  break;
-	}
-
-	lastHTMLSize = currentHTMLSize;
-	await page.waitForTimeout(checkDurationMsecs);
-  }
-};
 
 export default async (req: any, res: any) => {
   let {body,method} = req
@@ -108,52 +80,83 @@ export default async (req: any, res: any) => {
   const page = await browser.newPage();
   await page.setViewport({ width: 1920, height: 1080 });
   await page.setRequestInterception(true);
-
+  await page.evaluateOnNewDocument(() =>
+    Object.defineProperty(navigator, 'platform', {
+      get: function () {
+        return 'Win32';
+        },
+    })
+  );
   // Set headers,else wont work.
   await page.setExtraHTTPHeaders({ 'Referer': 'https://www.google.com/' });
 
   const logger: string[] = [];
-  const finalResponse:{source:string,subtitle:string[]} = {source:'',subtitle:[]};
+  const finalResponse:{source:string} = {source:''}
   // Define our blocked extensions
   const blockedExtensions = ['.png', '.jpg', '.jpeg', '.pdf', '.svg'];
-
   // Use CDP session to block resources
   await page.client().send('Network.setBlockedURLs', { urls: blockedExtensions });
 
-  await page.setRequestInterception(true);
-  await page.on('requestfinished', async (request) => {
-      var response = await request.response();
-      try {
-          if (request.redirectChain().length === 0) {
-             var responseBody = await response.buffer();
-             console.log(responseBody.toString());
-          }
-      }catch (err) { console.log(err); }
-  });
-  await page.on('request', request => {
-      request.continue();
-  });
+  // define a scraper function
+    async function scraper(page) {
 
-  try {
-	const [req] = await Promise.all([
-	  	page.waitForRequest(req => req.url(), { timeout: 20000 }),
-		console.log("We are going to " + iurl + ":"),
-		// page.goto(`${iurl}?z=&_debug=true`, { waitUntil: 'domcontentloaded' }),
-		await page.goto(`${iurl}?z=&_debug=true`, { waitUntil: ['domcontentloaded'] }),
-		// page.goto(`${id}?z=&_debug=true`, { waitUntil: 'networkidle0' }),
-		await page.waitForSelector(`${selector}`),
-		// await page.click(`${selector}`),
-		// await page.waitForSelector(".jw-state-playing"),
-		await waitTillHTMLRendered(page),
-		// const data = await page.content(),
-		// await page.waitForNavigation({waitUntil: 'networkidle0', }),
-		]);
-  } catch (error) {
-	  console.log(`Webhook Error: ${error.message}`),
-	  // console.log('prisma before')
-	  res.status(400).json({ error: `Webhook Error: ${error.message}` })
-	  }
-  await browser.close();
+        // iterate through the product containers to extract the products
+        const products = await page.$$eval(".flex.flex-col.items-center.rounded-lg", elements => {
+            return elements.map(element => {
+                const nameElement = element.querySelector(".self-start.text-left.w-full > span:first-child");
+                const priceElement = element.querySelector(".text-slate-600");
+                const imageElement = element.querySelector("img");
+
+                // return the extracted data
+                return {
+                    name: nameElement ? nameElement.textContent.trim() : "",
+                    price: priceElement ? priceElement.textContent.trim() : "",
+                    image: imageElement ? imageElement.src : ""
+                };
+            });
+        });
+        // output the result data
+        console.log(products);
+    }
+
+    (async () => {
+
+        // launch the browser in headless mode
+        const browser = await puppeteer.launch({ headless: "new" });
+        const page = await browser.newPage();
+
+        // open the target page
+        await page.goto("https://scrapingcourse.com/infinite-scrolling");
+
+        // get the last scroll height
+        let lastHeight = 0;
+
+        while (true) {
+            // scroll to bottom
+            await page.evaluate("window.scrollTo(0, document.body.scrollHeight);");
+
+            // wait for the page to load
+            await new Promise(resolve => setTimeout(resolve, 10000));
+
+            // get the new height value
+            const newHeight = await page.evaluate("document.body.scrollHeight");
+
+            // break the loop if there are no more heights to scroll
+            if (newHeight === lastHeight) {
+
+                // extract data once all content has loaded
+                await scraper(page);
+
+                break;
+            }
+
+            // update the last height to the new height
+            lastHeight = newHeight;
+        }
+
+        // close the browser
+        await browser.close();
+        })();
 
   // Response headers.
   res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate')
@@ -164,8 +167,8 @@ export default async (req: any, res: any) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
   res.setHeader(
-	'Access-Control-Allow-Headers',
-	'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   )
   // console.log(finalResponse);
   res.json(finalResponse);
