@@ -30,7 +30,7 @@ puppeteer.use(StealthPlugin())
 
 // This function can run for a maximum of 30 seconds
 export const config = {
-  maxDuration: 30,
+  maxDuration: 60,
 };
 
 
@@ -113,7 +113,7 @@ export default async (req: any, res: any) => {
   // console.log(await res.text());
   try {
     const [req] = await Promise.all([
-      page.goto(iurl, { waitUntil: 'domcontentloaded' , timeout: 60000 }),
+      page.goto(iurl, { waitUntil: 'domcontentloaded' , timeout: 40000 }),
       await page.waitForSelector(`${selector}`, { timeout: 5000 }),
       await page.click(`${selector}`, { timeout: 5000 })
       // Extract the entire HTML content of the page
