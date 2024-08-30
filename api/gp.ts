@@ -54,9 +54,13 @@ export default async (req: any, res: any) => {
   if (typeof body === 'object' && !body.iurl) return res.status(400).end(`No url provided`)
 
   const iurl = body.iurl;
-  const selector = body.selector;
+//   const selector = body.selector;
   const isProd = process.env.NODE_ENV === 'production';
-
+ if (body.selector === '') {
+    const selector = 'html'
+ } else {
+    const selector = body.selector
+ }
   // create browser based on ENV
   let browser;
   if (isProd) {
