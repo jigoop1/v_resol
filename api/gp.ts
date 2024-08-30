@@ -113,9 +113,9 @@ export default async (req: any, res: any) => {
   // console.log(await res.text());
   try {
     const [req] = await Promise.all([
-      page.goto(iurl, { waitUntil: 'domcontentloaded' , timeout: 40000 }),
-      await page.waitForSelector(`${selector}`, { timeout: 5000 }),
-      await page.click(`${selector}`, { timeout: 5000 })
+      page.goto(iurl, { waitUntil: 'domcontentloaded' , timeout: 30000 }),
+      await page.waitForSelector(`${selector}`, { timeout: 9000 }),
+      await page.click(`${selector}`)
       // Extract the entire HTML content of the page
       // const pageHTML = await page.content(),
       // Identify the iframe using a selector or any other appropriate method
