@@ -39,14 +39,14 @@ export default async (req: any, res: any) => {
 
   // Some header shits
   if (method !== 'POST') {
-	res.setHeader('Access-Control-Allow-Credentials', true)
-	res.setHeader('Access-Control-Allow-Origin', '*')
-	res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
-	res.setHeader(
-	  'Access-Control-Allow-Headers',
-	  'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-	)
-	return res.status(200).end()
+    res.setHeader('Access-Control-Allow-Credentials', true)
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    )
+    return res.status(200).end()
   }
 
   // Some checks...
@@ -60,19 +60,19 @@ export default async (req: any, res: any) => {
   // create browser based on ENV
   let browser;
   if (isProd) {
-	browser = await puppeteer.launch({
-	  args: chrome.args,
-	  defaultViewport: chrome.defaultViewport,
-	  executablePath: await chrome.executablePath(),
-	  headless: true,
-	  ignoreHTTPSErrors: true
-	})
+    browser = await puppeteer.launch({
+      args: chrome.args,
+      defaultViewport: chrome.defaultViewport,
+      executablePath: await chrome.executablePath(),
+      headless: true,
+      ignoreHTTPSErrors: true
+    })
   } else {
-	browser = await puppeteer.launch({
-		headless: true,
-		executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-	})
-  };
+    browser = await puppeteer.launch({
+      headless: true,
+      executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    })
+  }
   const page = await browser.newPage();
   await page.setViewport({ width: 1920, height: 1080 });
   await page.setRequestInterception(true);
@@ -84,47 +84,49 @@ export default async (req: any, res: any) => {
   const finalResponse:{source:string} = {source:''}
   // Define our blocked extensions
   const blockedExtensions = ['.png', '.jpg', '.jpeg', '.pdf', '.svg'];
-
   // Use CDP session to block resources
   await page.client().send('Network.setBlockedURLs', { urls: blockedExtensions });
 
-  await page.setRequestInterception(true);
-  await page.on('requestfinished', async (req) => {
+  // await page.setRequestInterception(true);
+  page.on('request', async (interceptedRequest) => {
+    await (async () => {
       var response = await req.response();
       try {
           if (req.redirectChain().length === 0) {
-             var responseBody = await response.buffer();
-             console.log(responseBody.toString());
+             var response = await response.buffer();
+             finalResponse.source = await response.toString();
+            //  console.log(responseBody.toString());
           }
       }catch (err) { console.log(err); }
+    })
+    interceptedRequest.continue();
   });
-  await page.on('request', req => {
-      req.continue();
-  });
-  page.on('response', res => {
-    if (res.url().includes('scripts'))
-        console.log(res.url());
-    });
+
+  // await page.on('request', req => {
+  //     req.continue();
+  // });
+  // page.on('response', res => {
+  //   if (res.url().includes('scripts'))
+  //       console.log(res.url());
+  //   });
   // const res = await page.waitForResponse(response => response.url().includes('scripts'));
-  console.log(await res.text());
+  // console.log(await res.text());
   try {
-	const [req] = await Promise.all([
-		page.goto(iurl, { waitUntil: 'domcontentloaded' , timeout: 60000 }),
-		await page.waitForSelector(`${selector}`, { timeout: 5000 }),
-		await page.click(`${selector}`, { timeout: 5000 })
-		// Extract the entire HTML content of the page
-		// const pageHTML = await page.content(),
-		// Identify the iframe using a selector or any other appropriate method
-		// const jsonData = JSON.stringify({ trustpilotContent });
-		// await page.waitForSelector(".jw-state-playing"),
-		// await waitTillHTMLRendered(page),
-		// await page.waitForNavigation({waitUntil: 'networkidle0', }),
-		]);
+    const [req] = await Promise.all([
+      page.goto(iurl, { waitUntil: 'domcontentloaded' , timeout: 60000 }),
+      await page.waitForSelector(`${selector}`, { timeout: 5000 }),
+      await page.click(`${selector}`, { timeout: 5000 })
+      // Extract the entire HTML content of the page
+      // const pageHTML = await page.content(),
+      // Identify the iframe using a selector or any other appropriate method
+      // const jsonData = JSON.stringify({ trustpilotContent });
+      // await page.waitForSelector(".jw-state-playing"),
+      // await waitTillHTMLRendered(page),
+      // await page.waitForNavigation({waitUntil: 'networkidle0', }),
+    ]);
   } catch (error) {
-	  console.log(`Webhook Error: ${error.message}`),
-	  // console.log('prisma before')
-	  res.status(400).json({ error: `Webhook Error: ${error.message}` })
-	  }
+    return res.status(500).end(`Server Error: ${error.message},check the params.`)
+  }
   await browser.close();
 
   // Response headers.
@@ -136,10 +138,9 @@ export default async (req: any, res: any) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
   res.setHeader(
-	'Access-Control-Allow-Headers',
-	'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   )
   // console.log(finalResponse);
-//   finalResponse.source = responseBody
   res.json(finalResponse);
 };
