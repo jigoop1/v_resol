@@ -90,73 +90,62 @@ export default async (req: any, res: any) => {
   // Set headers,else wont work.
   await page.setExtraHTTPHeaders({ 'Referer': 'https://www.google.com/' });
 
-  const logger: string[] = [];
-  const finalResponse:{source:string} = {source:''}
+  let logger;
+  let finalResponse;
   // Define our blocked extensions
   const blockedExtensions = ['.png', '.jpg', '.jpeg', '.pdf', '.svg'];
   // Use CDP session to block resources
   await page.client().send('Network.setBlockedURLs', { urls: blockedExtensions });
 
   // define a scraper function
-    async function scraper(page) {
+  async function scraper(page) {
+    // iterate through the product containers to extract the finalResponse
+    const finalResponse = await page.$$eval(".", elements => {
+          return elements.map(element => {
+              const nameElement = element.querySelector(".body");
+              const priceElement = element.querySelector(".html");
+              // return the extracted data
+              return {
+                body: nameElement ? nameElement.trim() : "",
+                html: priceElement ? priceElement.trim() : "",
+              };
+          });
+      });
+      // output the result data
+    console.log(finalResponse);
+  }
 
-        // iterate through the product containers to extract the products
-        const products = await page.$$eval(".flex.flex-col.items-center.rounded-lg", elements => {
-            return elements.map(element => {
-                const nameElement = element.querySelector(".self-start.text-left.w-full > span:first-child");
-                const priceElement = element.querySelector(".text-slate-600");
-                const imageElement = element.querySelector("img");
+  (async () => {
 
-                // return the extracted data
-                return {
-                    name: nameElement ? nameElement.textContent.trim() : "",
-                    price: priceElement ? priceElement.textContent.trim() : "",
-                    image: imageElement ? imageElement.src : ""
-                };
-            });
-        });
-        // output the result data
-        console.log(products);
-    }
+      // launch the browser in headless mode
+      const browser = await puppeteer.launch({ headless: "new" });
+      const page = await browser.newPage();
 
-    (async () => {
+      // open the target page
+    await page.goto(iurl, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-        // launch the browser in headless mode
-        const browser = await puppeteer.launch({ headless: "new" });
-        const page = await browser.newPage();
+      // get the last scroll height
+      let lastHeight = 0;
 
-        // open the target page
-        await page.goto("https://scrapingcourse.com/infinite-scrolling");
-
-        // get the last scroll height
-        let lastHeight = 0;
-
-        while (true) {
-            // scroll to bottom
-            await page.evaluate("window.scrollTo(0, document.body.scrollHeight);");
-
-            // wait for the page to load
-            await new Promise(resolve => setTimeout(resolve, 10000));
-
-            // get the new height value
-            const newHeight = await page.evaluate("document.body.scrollHeight");
-
-            // break the loop if there are no more heights to scroll
-            if (newHeight === lastHeight) {
-
-                // extract data once all content has loaded
-                await scraper(page);
-
-                break;
-            }
-
-            // update the last height to the new height
-            lastHeight = newHeight;
-        }
-
-        // close the browser
-        await browser.close();
-        })();
+      while (true) {
+          // scroll to bottom
+          await page.evaluate("window.scrollTo(0, document.body.scrollHeight);");
+          // wait for the page to load
+          await new Promise(resolve => setTimeout(resolve, 10000));
+          // get the new height value
+          const newHeight = await page.evaluate("document.body.scrollHeight");
+          // break the loop if there are no more heights to scroll
+          if (newHeight === lastHeight) {
+              // extract data once all content has loaded
+              await scraper(page);
+              break;
+          }
+          // update the last height to the new height
+          lastHeight = newHeight;
+      }
+      // close the browser
+      await browser.close();
+  })();
 
   // Response headers.
   res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate')

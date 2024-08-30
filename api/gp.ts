@@ -80,7 +80,13 @@ export default async (req: any, res: any) => {
   const page = await browser.newPage();
   await page.setViewport({ width: 1920, height: 1080 });
   await page.setRequestInterception(true);
-
+  await page.evaluateOnNewDocument(() =>
+    Object.defineProperty(navigator, 'platform', {
+      get: function () {
+        return 'Win32';
+        },
+    })
+  );
   // Set headers,else wont work.
   await page.setExtraHTTPHeaders({ 'Referer': 'https://www.google.com/' });
 
