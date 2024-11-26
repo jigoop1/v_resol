@@ -95,21 +95,21 @@ export default async (req: any, res: any) => {
     await (async () => {
       var response = await req.response();
       try {
-          if (req.redirectChain().length === 0) {
-            var response = await response.buffer();
-            const contentType = response.headers.get("content-type");
-            var data;
-            if (contentType && contentType.includes("application/json")) {
-              data = await response.json();
-            }
-            else {
-              data = await response.text();
-            }
-            finalResponse.source = data
-            return finalResponse;
+          // if (req.redirectChain().length === 0) {
+          var response = await response.buffer();
+          const contentType = response.headers.get("content-type");
+          var data;
+          if (contentType && contentType.includes("application/json")) {
+            data = await response.json();
+          }
+          else {
+            data = await response.text();
+          }
+          finalResponse.source = data
+            // return finalResponse;
             //  finalResponse.source = await response.content();
             //  console.log(responseBody.toString());
-          }
+          // }
       }catch (err) { console.log(err); }
     })
     interceptedRequest.continue();
