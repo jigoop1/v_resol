@@ -51,16 +51,15 @@ export default async (req: any, res: any) => {
 
   // Some checks...
   if (!body) return res.status(400).end(`No body provided`)
-  if (typeof body === 'object' && !body.iurl) return res.status(400).end(`No url provided`)
+  if (typeof body === 'object' && !body.id) return res.status(400).end(`No url provided`)
 
-  const iurl = body.iurl;
-  const selector = 'html';
+  const id = body.id;
+  if (body.selector === '') {
+     const selector = 'html'
+  } else {
+     const selector = body.selector
+  }
   const isProd = process.env.NODE_ENV === 'production';
- if (body.selector === '') {
-    const selector = 'html'
- } else {
-    const selector = body.selector
- }
   // create browser based on ENV
   let browser;
   if (isProd) {
@@ -78,7 +77,7 @@ export default async (req: any, res: any) => {
     })
   }
   const page = await browser.newPage();
-  await page.setViewport({ width: 1920, height: 1080 });
+  // await page.setViewport({ width: 1920, height: 1080 });
   await page.setRequestInterception(true);
   // await page.evaluateOnNewDocument(() =>
     // Object.defineProperty(navigator, 'platform', {
@@ -133,7 +132,7 @@ export default async (req: any, res: any) => {
   // console.log(await res.text());
   try {
     const [req] = await Promise.all([
-      page.goto(iurl, { waitUntil: 'domcontentloaded' , timeout: 30000 }),
+      page.goto(id, { waitUntil: 'domcontentloaded' , timeout: 30000 }),
       await page.waitForSelector(`${selector}`, { timeout: 9000 }),
       await page.click(`${selector}`)
       // Extract the entire HTML content of the page
