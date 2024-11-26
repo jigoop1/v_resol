@@ -53,9 +53,8 @@ export default async (req: any, res: any) => {
   if (typeof body === 'object' && !body.id) return res.status(400).end(`No url provided`)
 
   const id = body.id;
-  if (body.selector === '') {
-     const selector = 'html'
-  } else {
+  const selector = 'html';
+  if (body.selector !== '') {
      const selector = body.selector
   };
   const isProd = process.env.NODE_ENV === 'production';
