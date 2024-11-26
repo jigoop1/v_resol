@@ -33,7 +33,6 @@ export const config = {
   maxDuration: 60,
 };
 
-
 export default async (req: any, res: any) => {
   let {body,method} = req
 
@@ -58,8 +57,9 @@ export default async (req: any, res: any) => {
      const selector = 'html'
   } else {
      const selector = body.selector
-  }
+  };
   const isProd = process.env.NODE_ENV === 'production';
+
   // create browser based on ENV
   let browser;
   if (isProd) {
@@ -79,22 +79,16 @@ export default async (req: any, res: any) => {
   const page = await browser.newPage();
   // await page.setViewport({ width: 1920, height: 1080 });
   await page.setRequestInterception(true);
-  // await page.evaluateOnNewDocument(() =>
-    // Object.defineProperty(navigator, 'platform', {
-      // get: function () {
-        // return 'Win32';
-        // },
-    // })
-  // );
+
   // Set headers,else wont work.
   await page.setExtraHTTPHeaders({ 'Referer': 'https://www.google.com/' });
 
   const logger: string[] = [];
   const finalResponse:{source:string} = {source:''}
   // Define our blocked extensions
-  const blockedExtensions = ['.png', '.jpg', '.jpeg', '.pdf', '.svg'];
+  // const blockedExtensions = ['.png', '.jpg', '.jpeg', '.pdf', '.svg'];
   // Use CDP session to block resources
-  await page.client().send('Network.setBlockedURLs', { urls: blockedExtensions });
+  // await page.client().send('Network.setBlockedURLs', { urls: blockedExtensions });
 
   // await page.setRequestInterception(true);
   page.on('request', async (interceptedRequest) => {
