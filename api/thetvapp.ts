@@ -51,10 +51,14 @@ export default async (req: any, res: any) => {
   // Some checks...
   if (!body) return res.status(400).end(`No body provided`)
   if (typeof body === 'object' && !body.id) return res.status(400).end(`No url provided`)
-  
+
   const id = body.id;
-  const selector = body.selector;
-  const isProd = process.env.NODE_ENV === 'production'
+  if (body.selector === '') {
+     const selector = 'html'
+  } else {
+     const selector = body.selector
+  };
+  const isProd = process.env.NODE_ENV === 'production';
 
   // create browser based on ENV
   let browser;
@@ -80,7 +84,7 @@ export default async (req: any, res: any) => {
 
   const logger: string[] = [];
   const finalResponse:{source:string,subtitle:string[]} = {source:'',subtitle:[]}
-  
+
   page.on('request', async (interceptedRequest) => {
     await (async () => {
       logger.push(interceptedRequest.url());
@@ -99,13 +103,14 @@ export default async (req: any, res: any) => {
       await page.waitForSelector(`${selector}`),
       await page.click(`${selector}`)
       // await page.waitForSelector(".jw-state-playing"),
-      // await page.waitTillHTMLRendered(page)
+      // await page.waitTillHTMLRendered(page),
       // await page.waitForNavigation({waitUntil: 'networkidle0', })
     ]);
   } catch (error) {
     return res.status(500).end(`Server Error: ${error.message},check the params.`)
   }
-  await browser.close();
+
+  if (browser) await browser.close();
 
   // Response headers.
   res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate')

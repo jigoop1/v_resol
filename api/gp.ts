@@ -126,16 +126,17 @@ export default async (req: any, res: any) => {
   // console.log(await res.text());
   try {
     const [req] = await Promise.all([
-      page.goto(id, { waitUntil: 'domcontentloaded' , timeout: 30000 }),
-      await page.waitForSelector(`${selector}`, { timeout: 9000 }),
+      page.goto(`${id}?z=&_debug=true`, { waitUntil: 'domcontentloaded' }),
+      // await page.waitForSelector(`${selector}`, { timeout: 9000 }),
+      await page.waitForSelector(`${selector}`),
       await page.click(`${selector}`)
       // Extract the entire HTML content of the page
       // const pageHTML = await page.content(),
       // Identify the iframe using a selector or any other appropriate method
       // const jsonData = JSON.stringify({ trustpilotContent });
       // await page.waitForSelector(".jw-state-playing"),
-      // await waitTillHTMLRendered(page),
-      // await page.waitForNavigation({waitUntil: 'networkidle0', }),
+      // await page.waitTillHTMLRendered(page),
+      // await page.waitForNavigation({waitUntil: 'networkidle0', })
     ]);
   } catch (error) {
     return res.status(500).end(`Server Error: ${error.message},check the params.`)
