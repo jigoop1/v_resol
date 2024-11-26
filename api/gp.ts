@@ -103,8 +103,18 @@ export default async (req: any, res: any) => {
       var response = await req.response();
       try {
           if (req.redirectChain().length === 0) {
-             var response = await response.buffer();
-             finalResponse.source = await response.toString();
+            var response = await response.buffer();
+            const contentType = response.headers.get("content-type");
+            var data;
+            if (contentType && contentType.includes("application/json")) {
+              data = await response.json();
+            }
+            else {
+              data = await response.text();
+            }
+            finalResponse.source = data
+            return finalResponse;
+            //  finalResponse.source = await response.content();
             //  console.log(responseBody.toString());
           }
       }catch (err) { console.log(err); }
@@ -137,7 +147,8 @@ export default async (req: any, res: any) => {
   } catch (error) {
     return res.status(500).end(`Server Error: ${error.message},check the params.`)
   }
-  await browser.close();
+
+  if (browser) await browser.close();
 
   // Response headers.
   res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate')
