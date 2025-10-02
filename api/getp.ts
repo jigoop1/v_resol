@@ -28,9 +28,9 @@ require('puppeteer-extra-plugin-stealth/evasions/window.outerdimensions')
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 puppeteer.use(StealthPlugin())
 
-// This function can run for a maximum of 30 seconds
+// This function can run for a maximum of 300 seconds
 export const config = {
-  maxDuration: 60,
+  maxDuration: 300,
 };
 
 const waitTillHTMLRendered = async (page, timeout = 30000) => {
